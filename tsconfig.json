@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "strict": true,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "lib": [
+      "esnext",
+      "dom"
+    ]
+  },
+  "include": [
+    "renderer/src/**/*.ts",
+    "renderer/src/**/*.d.ts",
+    "renderer/src/**/*.tsx",
+    "renderer/src/**/*.vue"
+  ]
+}
