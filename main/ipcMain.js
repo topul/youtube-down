@@ -3,6 +3,21 @@ const youtubedl = require("youtube-dl-exec");
 const fs = require("fs");
 const path = require("path");
 
+let configData = {};
+try {
+  const configDataStr = fs.readFileSync(
+    path.join(app.getAppPath(), "config.json"),
+    {
+      encoding: "utf-8",
+    }
+  );
+  if (configDataStr) {
+    configData = JSON.parse(configDataStr);
+  }
+} catch (error) {
+  console.log(error);
+}
+
 function mainProcess() {
   ipcMain.handle("download", async (event, args) => {
     let output = "";
@@ -17,7 +32,7 @@ function mainProcess() {
         referer: "https://www.youtube.com",
         playlistStart: args.startPlaylist,
         playlistEnd: args.endPlaylist,
-        proxy: args.proxy,
+        proxy: configData.proxy,
       });
     } catch (error) {
       output = error;
