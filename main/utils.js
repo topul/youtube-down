@@ -2,9 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const youtubedl = require("youtube-dl-exec");
 const { dialog, app } = require("electron");
-const request = require("request");
-
-let videoUrls = [];
 
 const getConfig = () => {
   let configData = {};
@@ -24,8 +21,8 @@ const getConfig = () => {
   return configData;
 };
 
-// 获取视频地址
-const download = async (event, args) => {
+// 获取视频信息
+const getVideoInfo = async (event, args) => {
   const configData = getConfig();
   console.log(configData);
   let output = "";
@@ -37,95 +34,38 @@ const download = async (event, args) => {
     preferFreeFormats: true,
     youtubeSkipDashManifest: true,
     referer: "https://www.youtube.com",
-    playlistStart: args.startPlaylist,
-    playlistEnd: args.endPlaylist,
   };
   if (configData.proxy) {
     config.proxy = `${configData.ip}:${configData.port}`;
   }
   try {
     output = await youtubedl(args.url, config);
-    if (output._type && output._type === "playlist") {
-      // 播放列表
-      output.entries.forEach((video) => {
-        const videoSource = video.formats.find(
-          (item) =>
-            item.format_note === args.formatNote &&
-            item.ext === "mp4" &&
-            (item.acodec || item.vcodec)
-        );
-        if (videoSource) {
-          downloadVideo(
-            videoSource.url,
-            `${configData.downloadFolder}/${video.title}.mp4`,
-            config.proxy
-          );
-        } else {
-          // 没找到这个清晰度
-        }
-      });
-    } else {
-      // 单个视频
-      const videoSource = output.formats.find(
-        (item) =>
-          item.format_note === args.formatNote &&
-          item.ext === "mp4" &&
-          (item.acodec || item.vcodec)
-      );
-      if (videoSource) {
-        downloadVideo(
-          videoSource.url,
-          `${configData.downloadFolder}/${output.title}.mp4`,
-          config.proxy
-        );
-      } else {
-        // 没找到这个清晰度
-      }
-    }
+    console.log(output);
   } catch (error) {
     output = error;
   }
   return output;
 };
 
-// 下载视频
-// TODO: 还要下载音频文件并合并
-const downloadVideo = (file_url, targetPath, proxy) => {
-  console.log(file_url, targetPath, proxy);
-  let received_bytes = 0;
-  let total_bytes = 0;
-
-  let requestConfig = {
-    method: "GET",
-    uri: file_url,
+// 获取视频地址
+const download = async (event, args) => {
+  const configData = getConfig();
+  console.log(configData);
+  let output = "";
+  let config = {
+    format: `${args.formatNote}+bestaudio[ext=m4a]/best[ext=${args.ext}]/best`,
+    output: `${configData.downloadFolder}/%(title)s.%(ext)s`,
   };
-  if (proxy) {
-    requestConfig.proxy = `http://${proxy}`;
+  if (configData.proxy) {
+    config.proxy = `${configData.ip}:${configData.port}`;
   }
-
-  let req = request(requestConfig);
-  let out = fs.createWriteStream(targetPath);
-  req.pipe(out);
-
-  req.on("response", (data) => {
-    total_bytes = parseInt(data.headers["content-length"]);
-  });
-
-  req.on("data", (chunk) => {
-    received_bytes += chunk.length;
-    showProgress(received_bytes, total_bytes);
-  });
-
-  req.on("complete", () => {
-    console.log("File successfully downloaded");
-  });
-};
-
-const showProgress = (received, total) => {
-  let percentage = (received * 100) / total;
-  console.log(
-    percentage + "% | " + received + " bytes out of " + total + " bytes."
-  );
+  try {
+    output = await youtubedl(args.url, config);
+    console.log(output);
+  } catch (error) {
+    output = error;
+  }
+  return output;
 };
 
 /**
@@ -173,4 +113,10 @@ const showOpenDialog = (event, args) => {
   }
 };
 
-module.exports = { download, writeFile, readFile, showOpenDialog };
+module.exports = {
+  download,
+  writeFile,
+  readFile,
+  showOpenDialog,
+  getVideoInfo,
+};

@@ -8,9 +8,12 @@
       ref="formRef"
     >
       <n-form-item label="视频地址" path="url">
-        <n-input placeholder="请输入视频地址" v-model:value="formValue.url" />
+        <n-input-group>
+          <n-input placeholder="请输入视频地址" v-model:value="formValue.url" />
+          <n-button type="primary" @click="getVideoInfo">获取视频信息</n-button>
+        </n-input-group>
       </n-form-item>
-      <n-form-item label="播放列表位置">
+      <n-form-item label="播放列表位置" v-if="formValue.showPlaylist">
         <n-input-group>
           <n-input-number v-model:value="formValue.startPlaylist" />
           <n-input-number v-model:value="formValue.endPlaylist" />
@@ -22,9 +25,16 @@
         </n-space>
       </n-form-item>
       <n-form-item label="清晰度">
-        <n-space vertical>
-          <n-select v-model:value="formValue.formatNote" :options="formats" />
-        </n-space>
+        <n-select
+          v-model:value="formValue.formatNote"
+          :options="formValue.formatsNote"
+        />
+      </n-form-item>
+      <n-form-item label="视频格式">
+        <n-select
+          v-model:value="formValue.ext"
+          :options="formValue.formatsExt"
+        />
       </n-form-item>
       <n-form-item>
         <n-button
@@ -40,26 +50,70 @@
 </template>
 <script lang="ts">
 import { ref } from "vue";
-import DownloadFormatNote from "./DownloadFormatNote";
 
 export default {
   setup() {
     const formRef = ref(null);
     const formValue = ref({
       url: "",
+      showPlaylist: false,
       startPlaylist: 1,
       endPlaylist: 1,
       thumbnail: true,
-      formatNote: "720p",
+      formatNote: "",
+      ext: "",
+      formatsNote: [],
+      formatsExt: [],
     });
+
+    function getVideoInfo(e) {
+      e.preventDefault();
+      window.ipcRenderer
+        .invoke("getVideoInfo", { url: formValue.value.url })
+        .then((res) => {
+          console.log(res);
+          // 根据thumbnail和formatNote存储对应的视频和缩略图
+          if (res._type && res._type === "playlist") {
+            // 是一个播放列表
+          } else {
+            // 单个视频
+            // 过滤出视频文件
+            res.formats.forEach((format) => {
+              if (format.format_note !== "tiny") {
+                formValue.value.formatsNote.push({
+                  label: `${format.format_note}_${format.ext}`,
+                  value: `${format.format_id}`,
+                });
+                const d = formValue.value.formatsExt.find(
+                  (obj) => obj.value === format.ext
+                );
+                if (!d) {
+                  formValue.value.formatsExt.push({
+                    label: `${format.ext}`,
+                    value: `${format.ext}`,
+                  });
+                }
+              }
+            });
+          }
+        });
+    }
+
     function handleDownload(e) {
       e.preventDefault();
       // https://youtu.be/6HUjDKVn0e0
-      console.log("download clicked", { ...formValue.value });
+      console.log("download clicked", {
+        formNote: formValue.value.formatNote,
+        ext: formValue.value.ext,
+      });
       formRef.value.validate((errors) => {
         if (!errors) {
-          (window as any).ipcRenderer
-            .invoke("download", { ...formValue.value })
+          window.ipcRenderer
+            .invoke("download", {
+              formNote: formValue.value.formatNote,
+              ext: formValue.value.ext,
+              url: formValue.value.url,
+            })
             .then((res) => {
               console.log(res);
               // 根据thumbnail和formatNote存储对应的视频和缩略图
@@ -71,8 +125,8 @@ export default {
     }
     return {
       handleDownload,
+      getVideoInfo,
       formValue,
-      formats: DownloadFormatNote,
       formRef,
       rules: {
         url: {
