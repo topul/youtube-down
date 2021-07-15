@@ -3,6 +3,7 @@
     <n-form label-placement="left">
       <n-form-item label="开启代理">
         <n-switch v-model:value="config.proxy" />
+        <span>（需重启生效）</span>
       </n-form-item>
       <n-form-item label="">
         <n-input-group>
@@ -21,6 +22,16 @@
           />
         </n-input-group>
       </n-form-item>
+      <n-form-item label="下载地址">
+        <n-input-group>
+          <n-input
+            type="input"
+            placeholder="请选择下载保存目录"
+            v-model:value="config.downloadFolder"
+          />
+          <n-button type="primary" ghost @click="showOpenDialog">选择</n-button>
+        </n-input-group>
+      </n-form-item>
     </n-form>
   </div>
 </template>
@@ -31,9 +42,10 @@ const config = ref({
   proxy: false,
   ip: "",
   port: "",
+  downloadFolder: "",
 });
 onMounted(() => {
-  (window as any).ipcRenderer.invoke("readFile", "config.json").then((res) => {
+  window.ipcRenderer.invoke("readFile", "config.json").then((res) => {
     if (typeof res === "string") {
       const setting = JSON.parse(res);
       config.value = setting;
@@ -43,7 +55,7 @@ onMounted(() => {
   });
 });
 onBeforeRouteLeave(() => {
-  (window as any).ipcRenderer
+  window.ipcRenderer
     .invoke("writeFile", {
       fileName: "config.json",
       fileContent: JSON.stringify(config.value),
@@ -52,6 +64,16 @@ onBeforeRouteLeave(() => {
       console.log(res);
     });
 });
+function showOpenDialog() {
+  window.ipcRenderer
+    .invoke("showOpenDialog", {
+      properties: ["openDirectory", "createDirectory"],
+    })
+    .then((res) => {
+      console.log(res);
+      config.value.downloadFolder = res[0];
+    });
+}
 </script>
 <style scoped>
 .setting-page {
