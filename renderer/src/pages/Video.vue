@@ -49,12 +49,40 @@
   </div>
 </template>
 <script lang="ts">
-import { ref } from "vue";
+import { reactive, ref } from "vue";
+
+type FormatsSelect = {
+  value: string;
+  label: string;
+};
+
+interface FormValue {
+  url: string;
+  startPlaylist: number;
+  endPlaylist: number;
+  thumbnail: boolean;
+  formatNote: string;
+  ext: string;
+  formatsNote: FormatsSelect[];
+  formatsExt: FormatsSelect[];
+  showPlaylist: boolean;
+}
+
+type VideoFormat = {
+  format_note: string;
+  format_id: string;
+  ext: string;
+};
+
+interface VideoInfo {
+  _type?: string;
+  formats: VideoFormat[];
+}
 
 export default {
   setup() {
     const formRef = ref(null);
-    const formValue = ref({
+    const formValue = reactive<FormValue>({
       url: "",
       showPlaylist: false,
       startPlaylist: 1,
@@ -66,11 +94,11 @@ export default {
       formatsExt: [],
     });
 
-    function getVideoInfo(e) {
+    function getVideoInfo(e: MouseEvent) {
       e.preventDefault();
       window.ipcRenderer
-        .invoke("getVideoInfo", { url: formValue.value.url })
-        .then((res) => {
+        .invoke("getVideoInfo", { url: formValue.url })
+        .then((res: VideoInfo) => {
           console.log(res);
           // 根据thumbnail和formatNote存储对应的视频和缩略图
           if (res._type && res._type === "playlist") {
@@ -78,17 +106,17 @@ export default {
           } else {
             // 单个视频
             // 过滤出视频文件
-            res.formats.forEach((format) => {
+            res.formats.forEach((format: VideoFormat) => {
               if (format.format_note !== "tiny") {
-                formValue.value.formatsNote.push({
+                formValue.formatsNote.push({
                   label: `${format.format_note}_${format.ext}`,
                   value: `${format.format_id}`,
                 });
-                const d = formValue.value.formatsExt.find(
+                const d = formValue.formatsExt.find(
                   (obj) => obj.value === format.ext
                 );
                 if (!d) {
-                  formValue.value.formatsExt.push({
+                  formValue.formatsExt.push({
                     label: `${format.ext}`,
                     value: `${format.ext}`,
                   });
@@ -99,20 +127,20 @@ export default {
         });
     }
 
-    function handleDownload(e) {
+    function handleDownload(e: MouseEvent) {
       e.preventDefault();
       // https://youtu.be/6HUjDKVn0e0
       console.log("download clicked", {
-        formNote: formValue.value.formatNote,
-        ext: formValue.value.ext,
+        formNote: formValue.formatNote,
+        ext: formValue.ext,
       });
       formRef.value.validate((errors) => {
         if (!errors) {
           window.ipcRenderer
             .invoke("download", {
-              formNote: formValue.value.formatNote,
-              ext: formValue.value.ext,
-              url: formValue.value.url,
+              formNote: formValue.formatNote,
+              ext: formValue.ext,
+              url: formValue.url,
             })
             .then((res) => {
               console.log(res);
