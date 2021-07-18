@@ -21,7 +21,11 @@
         />
       </n-layout-sider>
       <n-layout>
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component :is="Component"></component>
+          </keep-alive>
+        </router-view>
       </n-layout>
     </n-layout>
   </n-space>

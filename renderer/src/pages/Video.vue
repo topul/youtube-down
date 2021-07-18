@@ -1,6 +1,7 @@
 <template>
   <div class="download-page">
     <n-form
+      class="download-form"
       label-placement="left"
       label-width="100"
       :model="formValue"
@@ -10,7 +11,12 @@
       <n-form-item label="视频地址" path="url">
         <n-input-group>
           <n-input placeholder="请输入视频地址" v-model:value="formValue.url" />
-          <n-button type="primary" @click="getVideoInfo">获取视频信息</n-button>
+          <n-button
+            type="primary"
+            :loading="formValue.infoLoading"
+            @click="getVideoInfo"
+            >获取视频信息</n-button
+          >
         </n-input-group>
       </n-form-item>
       <n-form-item label="播放列表位置" v-if="formValue.showPlaylist">
@@ -51,34 +57,7 @@
 <script lang="ts">
 import { NForm } from "naive-ui";
 import { reactive, ref } from "vue";
-
-type FormatsSelect = {
-  value: string;
-  label: string;
-};
-
-interface FormValue {
-  url: string;
-  startPlaylist: number;
-  endPlaylist: number;
-  thumbnail: boolean;
-  formatNote: string;
-  ext: string;
-  formatsNote: FormatsSelect[];
-  formatsExt: FormatsSelect[];
-  showPlaylist: boolean;
-}
-
-type VideoFormat = {
-  format_note: string;
-  format_id: string;
-  ext: string;
-};
-
-interface VideoInfo {
-  _type?: string;
-  formats: VideoFormat[];
-}
+import { FormValue, VideoInfo } from "./Video";
 
 export default {
   setup() {
@@ -93,10 +72,12 @@ export default {
       ext: "",
       formatsNote: [],
       formatsExt: [],
+      infoLoading: false,
     });
 
     function getVideoInfo(e: MouseEvent) {
       e.preventDefault();
+      formValue.infoLoading = true;
       window.ipcRenderer
         .invoke("getVideoInfo", { url: formValue.url })
         .then((res: VideoInfo) => {
@@ -125,6 +106,9 @@ export default {
               }
             });
           }
+        })
+        .finally(() => {
+          formValue.infoLoading = false;
         });
     }
 
@@ -172,11 +156,14 @@ export default {
 .download-page {
   /* width: 80%; */
   height: 100vh;
-  margin: 0 auto;
+  margin: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+.download-form {
+  width: 100%;
 }
 .download-page-button {
   width: 100%;

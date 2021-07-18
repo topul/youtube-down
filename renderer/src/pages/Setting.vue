@@ -3,7 +3,6 @@
     <n-form label-placement="left">
       <n-form-item label="开启代理">
         <n-switch v-model:value="config.proxy" />
-        <span>（需重启生效）</span>
       </n-form-item>
       <n-form-item label="">
         <n-input-group>
@@ -35,8 +34,9 @@
     </n-form>
   </div>
 </template>
+
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { defineComponent, onMounted, reactive, ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 
 interface Config {
@@ -46,7 +46,7 @@ interface Config {
   downloadFolder: string;
 }
 
-let config = reactive<Config>({
+let config = ref<Config>({
   proxy: false,
   ip: "",
   port: "",
@@ -55,8 +55,8 @@ let config = reactive<Config>({
 onMounted(() => {
   window.ipcRenderer.invoke("readFile", "config.json").then((res: string) => {
     if (typeof res === "string") {
-      const setting: Config = JSON.parse(res);
-      config = setting;
+      const setting = JSON.parse(res);
+      config.value = { ...setting };
     } else {
       console.log(res);
     }
@@ -66,7 +66,7 @@ onBeforeRouteLeave(() => {
   window.ipcRenderer
     .invoke("writeFile", {
       fileName: "config.json",
-      fileContent: JSON.stringify(config),
+      fileContent: JSON.stringify(config.value),
     })
     .then((res) => {
       console.log(res);
@@ -79,7 +79,7 @@ function showOpenDialog() {
     })
     .then((res: string[]) => {
       console.log(res);
-      config.downloadFolder = res[0];
+      config.value.downloadFolder = res[0];
     });
 }
 </script>

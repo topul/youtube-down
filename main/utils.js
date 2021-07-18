@@ -47,7 +47,7 @@ const getVideoInfo = async (event, args) => {
   return output;
 };
 
-// 获取视频地址
+// 下载视频
 const download = async (event, args) => {
   const configData = getConfig();
   console.log(configData);
