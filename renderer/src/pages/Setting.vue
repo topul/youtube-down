@@ -36,19 +36,27 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
-const config = ref({
+
+interface Config {
+  proxy: boolean;
+  ip: string;
+  port: string;
+  downloadFolder: string;
+}
+
+let config = reactive<Config>({
   proxy: false,
   ip: "",
   port: "",
   downloadFolder: "",
 });
 onMounted(() => {
-  window.ipcRenderer.invoke("readFile", "config.json").then((res) => {
+  window.ipcRenderer.invoke("readFile", "config.json").then((res: string) => {
     if (typeof res === "string") {
-      const setting = JSON.parse(res);
-      config.value = setting;
+      const setting: Config = JSON.parse(res);
+      config = setting;
     } else {
       console.log(res);
     }
@@ -58,7 +66,7 @@ onBeforeRouteLeave(() => {
   window.ipcRenderer
     .invoke("writeFile", {
       fileName: "config.json",
-      fileContent: JSON.stringify(config.value),
+      fileContent: JSON.stringify(config),
     })
     .then((res) => {
       console.log(res);
@@ -69,9 +77,9 @@ function showOpenDialog() {
     .invoke("showOpenDialog", {
       properties: ["openDirectory", "createDirectory"],
     })
-    .then((res) => {
+    .then((res: string[]) => {
       console.log(res);
-      config.value.downloadFolder = res[0];
+      config.downloadFolder = res[0];
     });
 }
 </script>

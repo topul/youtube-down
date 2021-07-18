@@ -49,6 +49,7 @@
   </div>
 </template>
 <script lang="ts">
+import { NForm } from "naive-ui";
 import { reactive, ref } from "vue";
 
 type FormatsSelect = {
@@ -81,7 +82,7 @@ interface VideoInfo {
 
 export default {
   setup() {
-    const formRef = ref(null);
+    const formRef = ref<InstanceType<typeof NForm>>();
     const formValue = reactive<FormValue>({
       url: "",
       showPlaylist: false,
@@ -106,7 +107,7 @@ export default {
           } else {
             // 单个视频
             // 过滤出视频文件
-            res.formats.forEach((format: VideoFormat) => {
+            res.formats.forEach((format) => {
               if (format.format_note !== "tiny") {
                 formValue.formatsNote.push({
                   label: `${format.format_note}_${format.ext}`,
