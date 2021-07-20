@@ -58,7 +58,7 @@ const menuOptions = [
     icon: renderIcon(VideoIcon),
   },
   {
-    label: "任务",
+    label: "下载",
     key: "download",
     icon: renderIcon(DownloadIcon),
   },

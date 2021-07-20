@@ -14,6 +14,7 @@ export interface FormValue {
   formatsExt: FormatsSelect[];
   showPlaylist: boolean;
   infoLoading: boolean;
+  downloadLoading: boolean;
 }
 
 export type VideoFormat = {

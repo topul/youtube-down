@@ -55,12 +55,13 @@
   </div>
 </template>
 <script lang="ts">
-import { NForm } from "naive-ui";
+import { NForm, useNotification } from "naive-ui";
 import { reactive, ref } from "vue";
 import { FormValue, VideoInfo } from "./Video";
 
 export default {
   setup() {
+    const notification = useNotification();
     const formRef = ref<InstanceType<typeof NForm>>();
     const formValue = reactive<FormValue>({
       url: "",
@@ -73,6 +74,7 @@ export default {
       formatsNote: [],
       formatsExt: [],
       infoLoading: false,
+      downloadLoading: false,
     });
 
     function getVideoInfo(e: MouseEvent) {
@@ -114,6 +116,7 @@ export default {
 
     function handleDownload(e: MouseEvent) {
       e.preventDefault();
+      formValue.downloadLoading = true;
       // https://youtu.be/6HUjDKVn0e0
       console.log("download clicked", {
         formNote: formValue.formatNote,
@@ -127,9 +130,21 @@ export default {
               ext: formValue.ext,
               url: formValue.url,
             })
-            .then((res) => {
+            .then((res: boolean) => {
               console.log(res);
+              if (res) {
+                notification.success({
+                  content: "下载成功",
+                });
+              } else {
+                notification.error({
+                  content: "下载失败，请查阅日志",
+                });
+              }
               // 根据thumbnail和formatNote存储对应的视频和缩略图
+            })
+            .finally(() => {
+              formValue.downloadLoading = false;
             });
         } else {
           console.log(errors);

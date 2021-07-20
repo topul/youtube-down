@@ -60,10 +60,11 @@ const download = async (event, args) => {
     config.proxy = `${configData.ip}:${configData.port}`;
   }
   try {
-    output = await youtubedl(args.url, config);
-    console.log(output);
+    await youtubedl(args.url, config);
+    output = true;
   } catch (error) {
-    output = error;
+    output = false;
+    console.log(error);
   }
   return output;
 };
